@@ -1,0 +1,23 @@
+{
+	"name": "Dev Container",
+	"build": {
+		"dockerfile": "Dockerfile",
+	},
+	"settings": {
+		"terminal.integrated.defaultProfile.linux": "zsh",
+	},
+	"extensions": [
+		"ms-dotnettools.vscode-dotnet-runtime",
+		"ms-vscode.azure-account",
+		"ms-azuretools.vscode-azureresourcegroups",
+		"ms-azuretools.vscode-azurefunctions",
+		"ms-azuretools.vscode-azurestaticwebapps",
+		"ms-azuretools.vscode-bicep",
+		"ms-python.python",
+		"sourcery.sourcery",
+		"visualstudioexptteam.vscodeintellicode",
+	],
+	"forwardPorts": [
+		7000
+	]
+}
