@@ -12,11 +12,17 @@ from tensorflow import keras
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 warnings.filterwarnings("ignore")
 
-df = pd.read_csv("data/fact_order_lines_merged.csv", delimiter=",", thousands=",")
-preprocessor_ifd = load(open("preprocessor_ifd/preprocessor_ifd.pkl", "rb"))
-preprocessor_otd = load(open("preprocessor_otd/preprocessor_otd.pkl", "rb"))
-model_ifd = keras.models.load_model("model_ifd")
-model_otd = keras.models.load_model("model_otd")
+df = pd.read_csv(
+    "mlsupplychain/data/fact_order_lines_merged.csv", delimiter=",", thousands=","
+)
+preprocessor_ifd = load(
+    open("mlsupplychain/preprocessor_ifd/preprocessor_ifd.pkl", "rb")
+)
+preprocessor_otd = load(
+    open("mlsupplychain/preprocessor_otd/preprocessor_otd.pkl", "rb")
+)
+model_ifd = keras.models.load_model("mlsupplychain/model_ifd")
+model_otd = keras.models.load_model("mlsupplychain/model_otd")
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
