@@ -26,6 +26,6 @@ get pushed to github repo.
 Link: [Web Application Demo](https://white-water-02d382d10.2.azurestaticapps.net)
 
 ## 5 MS Docs Link
-Ref: [MS Docs: Static Web Apps Hosting Plans](https://learn.microsoft.com/en-us/azure/static-web-apps/plans)
+Ref: [MS Docs: Function Apps Hosting Plans](https://learn.microsoft.com/en-us/azure/azure-functions/functions-scale)
 
 Ref: [MS Docs Static Web Apps with Function Integration](https://docs.microsoft.com/en-us/azure/static-web-apps/functions-bring-your-own/)
