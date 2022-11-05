@@ -1,4 +1,4 @@
-#  Azure Static Web Apps
+#  Azure Functions
 ## 1. Introduction
 ### 1.1	Overview
 This is a machine learning notebook covering a prediction model to be used as a reference for other data scientists. The workflow is based on the following:
