@@ -2,7 +2,7 @@ name: Azure Function App
 on: [push]
 
 env:
-  AZURE_FUNCTIONAPP_NAME: "supplychainfuncapp"
+  AZURE_FUNCTIONAPP_NAME: "azurefunctions"
   AZURE_FUNCTIONAPP_PACKAGE_PATH: "."
   PYTHON_VERSION: "3.8"
 
@@ -30,8 +30,8 @@ jobs:
 
     - name: Lint with flake8
       run: |
-        flake8 ./supplychainfuncapp --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 ./supplychainfuncapp --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 ./mlsupplychain --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mlsupplychain --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
   
     - name: Run Azure Functions Action
       uses: Azure/functions-action@v1.3.1
