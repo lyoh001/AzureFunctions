@@ -6,9 +6,10 @@ import requests
 
 def main(mytimer: func.TimerRequest) -> None:
     logging.info("*******Starting main function*******")
+    url = "https://orange-water-0538b1c10.2.azurestaticapps.net/"
     logging.info(
         requests.post(
-            "https://white-water-02d382d10.2.azurestaticapps.net/api/mlhospitality",
+            url=f"{url}mlhospitality",
             json={
                 "City_Code": [""],
                 "Accomodation_Type": [""],
@@ -25,7 +26,7 @@ def main(mytimer: func.TimerRequest) -> None:
     )
     logging.info(
         requests.post(
-            "https://white-water-02d382d10.2.azurestaticapps.net/api/mlmobileuurka",
+            url=f"{url}mlmobileuurka",
             json={
                 "Age": [""],
                 "BS": [""],
@@ -38,7 +39,7 @@ def main(mytimer: func.TimerRequest) -> None:
     )
     logging.info(
         requests.post(
-            "https://white-water-02d382d10.2.azurestaticapps.net/api/mlsupplychain",
+            url=f"{url}mlsupplychain",
             json={
                 "customer_id": ["789203"],
                 "days_for_delivery": ["1"],
