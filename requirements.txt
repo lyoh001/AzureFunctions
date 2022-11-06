@@ -2,5 +2,6 @@ azure-functions
 black
 numpy
 pandas
+requests
 scikit-learn==1.0.2
 tensorflow
