@@ -6,7 +6,7 @@ import requests
 
 def main(mytimer: func.TimerRequest) -> None:
     logging.info("*******Starting main function*******")
-    url = "https://orange-water-0538b1c10.2.azurestaticapps.net/"
+    url = "https://orange-water-0538b1c10.2.azurestaticapps.net/api/"
     logging.info(
         requests.post(
             url=f"{url}mlhospitality",
