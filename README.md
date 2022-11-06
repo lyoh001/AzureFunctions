@@ -12,9 +12,8 @@ This is a machine learning notebook covering a prediction model to be used as a 
 ![Figure 2: Logical Architecture Overview](./images/workflow.png)
 - Data gets pulled from SQL to AWS Sagemaker Studio lab for EDA and model building.
 - Building ML and DL models and export out for a later consumption (ML/DL as service via API).
-- Notebook, IaC and ML models.
+- Notebook, IaC and ML models get pushed to github repo.
 - Github action builds Azure Static Web app and Azure Function using Bicep.
-get pushed to github repo.
 - Model gets invoked via API call powered by Azure Function.
 - The logic apps triggers the function every 2 minutes to keep the Function warm. (Avoiding a coldstart)
 - The end users can consume ML as a service via Webapp.
