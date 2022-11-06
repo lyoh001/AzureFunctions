@@ -30,6 +30,12 @@ jobs:
 
     - name: Lint with flake8
       run: |
+        flake8 ./mlhospitality --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mlhospitality --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 ./mlmobileuurka --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mlmobileuurka --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 ./mlping --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mlping --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
         flake8 ./mlsupplychain --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 ./mlsupplychain --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
   
