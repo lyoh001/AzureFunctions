@@ -22,7 +22,7 @@ This is a machine learning notebook covering a prediction model to be used as a 
 ![Figure 3: Power BI Dashboard](./images/powerbi.png)
 
 ## 4 Azure Static Web App for ML Prediction Demo
-Link: [Web Application Demo](https://white-water-02d382d10.2.azurestaticapps.net)
+Link: [Web Application Demo](https://orange-water-0538b1c10.2.azurestaticapps.net/mlsupplychain)
 
 ## 5 MS Docs Link
 Ref: [MS Docs: Function Apps Hosting Plans](https://learn.microsoft.com/en-us/azure/azure-functions/functions-scale)
