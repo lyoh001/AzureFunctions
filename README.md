@@ -25,6 +25,8 @@ This is a machine learning notebook covering a prediction model to be used as a 
 Link: [Web Application Demo](https://orange-water-0538b1c10.2.azurestaticapps.net/mlsupplychain)
 
 ## 5 MS Docs Link
-Ref: [MS Docs: Function Apps Hosting Plans](https://learn.microsoft.com/en-us/azure/azure-functions/functions-scale)
+Ref: [MS Docs: Azure Static Web Apps Hosting Plans](https://learn.microsoft.com/en-us/azure/static-web-apps/plans)
 
-Ref: [MS Docs Static Web Apps with Function Integration](https://docs.microsoft.com/en-us/azure/static-web-apps/functions-bring-your-own/)
+Ref: [MS Docs: Azure Function Apps Hosting Plans](https://learn.microsoft.com/en-us/azure/azure-functions/functions-scale)
+
+Ref: [MS Docs: Azure Static Web Apps with Function Integration](https://docs.microsoft.com/en-us/azure/static-web-apps/functions-bring-your-own/)
