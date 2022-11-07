@@ -44,7 +44,7 @@ def main(mytimer: func.TimerRequest) -> None:
                 "customer_id": ["789203"],
                 "days_for_delivery": ["1"],
                 "order_date": ["2022-01-01"],
-                "order_qty": ["10"],
+                "order_qty": ["1"],
                 "product_name": ["AM Ghee 250"],
             },
         )
