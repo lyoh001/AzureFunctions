@@ -9,18 +9,12 @@ def main(mytimer: func.TimerRequest) -> None:
     url = "https://thankful-pond-0298bdb10.2.azurestaticapps.net/api/"
     logging.info(
         requests.post(
-            url=f"{url}mlhospitality",
+            url=f"{url}mltelecom",
             json={
-                "City_Code": [""],
-                "Accomodation_Type": [""],
-                "Reco_Insurance_Type": [""],
-                "Upper_Age": [""],
-                "Lower_Age": [""],
-                "Is_Spouse": [""],
-                "Health Indicator": [""],
-                "Holding_Policy_Duration": [""],
-                "Holding_Policy_Type": [""],
-                "Reco_Policy_Cat": [""],
+                "city_name": ["Gurgaon"],
+                "time_period": ["2022-11"],
+                "data_size": ["30"],
+                "valid_period": ["180"],
             },
         )
     )
