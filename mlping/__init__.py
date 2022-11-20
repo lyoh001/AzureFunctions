@@ -6,7 +6,7 @@ import requests
 
 def main(mytimer: func.TimerRequest) -> None:
     logging.info("*******Starting main function*******")
-    url = "https://thankful-pond-0298bdb10.2.azurestaticapps.net/api/"
+    url = "https://orange-water-0538b1c10.2.azurestaticapps.net/api/"
     logging.info(
         requests.post(
             url=f"{url}mltelecom",
@@ -22,12 +22,12 @@ def main(mytimer: func.TimerRequest) -> None:
         requests.post(
             url=f"{url}mlmobileuurka",
             json={
-                "Age": [""],
-                "BS": [""],
-                "BodyTemp": [""],
-                "DiastolicBP": [""],
-                "HeartRate": [""],
-                "SystolicBP": [""],
+                "Age": ["10"],
+                "BS": ["6"],
+                "BodyTemp": ["98"],
+                "DiastolicBP": ["49"],
+                "HeartRate": ["60"],
+                "SystolicBP": ["70"],
             },
         )
     )
