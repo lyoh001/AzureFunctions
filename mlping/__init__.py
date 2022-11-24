@@ -1,4 +1,5 @@
 import logging
+import os
 
 import azure.functions as func
 import requests
@@ -6,7 +7,7 @@ import requests
 
 def main(mytimer: func.TimerRequest) -> None:
     logging.info("*******Starting main function*******")
-    url = "https://thankful-pond-0298bdb10.2.azurestaticapps.net/api/"
+    url = os.environ["URL"]
     logging.info(
         requests.post(
             url=f"{url}mltelecom",
