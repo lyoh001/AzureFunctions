@@ -1,5 +1,6 @@
 name: Azure Function App
-on: [push]
+# on: [push]
+on: [pull]
 
 env:
   AZURE_FUNCTIONAPP_NAME: "vickk73mlfuncapp"

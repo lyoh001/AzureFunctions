@@ -1,0 +1,8 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "URL": "http://localhost:7071/api/",
+    "FUNCTIONS_WORKER_RUNTIME": "python"
+  }
+}
