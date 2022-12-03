@@ -1,10 +1,10 @@
 {
 	"name": "Dev Container",
 	"build": {
-		"dockerfile": "Dockerfile",
+		"dockerfile": "Dockerfile"
 	},
 	"settings": {
-		"terminal.integrated.defaultProfile.linux": "zsh",
+		"terminal.integrated.defaultProfile.linux": "zsh"
 	},
 	"extensions": [
 		"ms-dotnettools.vscode-dotnet-runtime",
@@ -15,8 +15,9 @@
 		"ms-azuretools.vscode-bicep",
 		"ms-python.python",
 		"sourcery.sourcery",
-		"visualstudioexptteam.vscodeintellicode",
+		"visualstudioexptteam.vscodeintellicode"
 	],
+	"postCreateCommand": "bash .devcontainer/postbuild.sh",
 	"forwardPorts": [
 		7000
 	]
