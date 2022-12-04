@@ -17,7 +17,7 @@
 		"sourcery.sourcery",
 		"visualstudioexptteam.vscodeintellicode"
 	],
-	"postCreateCommand": "bash .devcontainer/postbuild.sh",
+    "postCreateCommand": "bash .devcontainer/postbuild.sh",
 	"forwardPorts": [
 		7000
 	]
