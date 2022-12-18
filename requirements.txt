@@ -4,4 +4,4 @@ numpy
 pandas
 requests
 scikit-learn==1.0.2
-tensorflow
+tensorflow==2.6.4
