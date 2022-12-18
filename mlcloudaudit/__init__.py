@@ -74,7 +74,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         columns=[y_label],
         index=pd.date_range(df.index[-1], periods=N_PAST, freq=FREQ, name=DATE_COL),
     )
-    prediction = df_future_pred.loc[user_input]["Bill"]
-    logging.info(prediction)
+    prediction = f"${df_future_pred.loc[user_input]['Bill']:.2f}"
+    logging.info(f"prediction: {prediction}")
 
-    return func.HttpResponse(status_code=200, body=f"${prediction:.2f}")
+    return func.HttpResponse(status_code=200, body=prediction)
