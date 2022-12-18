@@ -10,6 +10,12 @@ def main(mytimer: func.TimerRequest) -> None:
     url = os.environ["URL"]
     logging.info(
         requests.post(
+            url=f"{url}mlcloudaudit",
+            json={"Date": ["2023-01"]},
+        )
+    )
+    logging.info(
+        requests.post(
             url=f"{url}mltelecom",
             json={
                 "city_name": ["Gurgaon"],
