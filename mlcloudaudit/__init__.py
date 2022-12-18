@@ -5,12 +5,11 @@ import logging
 import warnings
 from pickle import load
 
+import azure.functions as func
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow import keras
-
-import azure.functions as func
 
 warnings.filterwarnings("ignore")
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -19,14 +18,19 @@ X_preprocessor = load(open("mlcloudaudit/preprocessor/X_preprocessor.pkl", "rb")
 y_preprocessor = load(open("mlcloudaudit/preprocessor/y_preprocessor.pkl", "rb"))
 model = keras.models.load_model("mlcloudaudit/model")
 
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("*******Starting main function*******")
     logging.info(f"Request query: {req.get_json()}")
-    payload = {
-        k: [np.nan] if next(iter(v)) == "" else v for k, v in req.get_json().items()
-    }
     try:
-        time_period = (datetime.datetime.strptime(payload["time_period"][0], "%Y-%m")- datetime.datetime.strptime("2022-09", "%Y-%m")).days // 29
+        selected_month = [v for _, v in req.get_json().items()][0][0].split("-")[-1]
+        user_input = str(
+            datetime.datetime.strptime(
+                f"2023-{selected_month}-{calendar.monthrange(2023, int(selected_month))[-1]}",
+                "%Y-%m-%d",
+            )
+        ).split()[0]
+        logging.info(f"selected_month: {selected_month}\nuser_input: {user_input}")
     except ValueError:
         return func.HttpResponse(
             status_code=200,
@@ -70,9 +74,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         columns=[y_label],
         index=pd.date_range(df.index[-1], periods=N_PAST, freq=FREQ, name=DATE_COL),
     )
-    logging.info(df_future_pred)
-    
-    return func.HttpResponse(
-        status_code=200,
-        body=f"{df_future_pred}"
-    )
+    prediction = df_future_pred.loc[user_input]["Bill"]
+    logging.info(prediction)
+
+    return func.HttpResponse(status_code=200, body=f"${prediction:.2f}")
