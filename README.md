@@ -26,11 +26,10 @@ Link: [Web Application Demo 1](https://lyoh001.com/mltelecom)
 
 Link: [Web Application Demo 2](https://lyoh001.com/mlsupplychain)
 
-Link: [Web Application Demo 3](https://lyoh001.com/mlmobileuurka)
+Link: [Web Application Demo 3](https://lyoh001.com/mlvmaudit)
 
 Link: [Web Application Demo 4](https://lyoh001.com/mlcloudaudit)
 
-Link: [Web Application Demo 5](https://lyoh001.com/mlvmaudit)
 
 ## 5 MS Docs Link
 Ref: [MS Docs: Azure Static Web Apps Hosting Plans](https://learn.microsoft.com/en-us/azure/static-web-apps/plans)
