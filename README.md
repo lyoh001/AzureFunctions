@@ -6,7 +6,6 @@ This is a machine learning notebook covering a prediction model to be used as a 
 - Github Codespace (devcontainer & Dockerfile)
 - CICD pipeline for deploying web apps to Azure
 
-
 ## 2 Logical Architecture
 ### 2.1	Logical System Component Overview
 ![Figure 2: Logical Architecture Overview](./images/workflow.png)
@@ -29,7 +28,6 @@ Link: [Web Application Demo 2](https://lyoh001.com/mlsupplychain)
 Link: [Web Application Demo 3](https://lyoh001.com/mlvmaudit)
 
 Link: [Web Application Demo 4](https://lyoh001.com/mlcloudaudit)
-
 
 ## 5 MS Docs Link
 Ref: [MS Docs: Azure Static Web Apps Hosting Plans](https://learn.microsoft.com/en-us/azure/static-web-apps/plans)
