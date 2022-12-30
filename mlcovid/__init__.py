@@ -3,9 +3,9 @@ import os
 import warnings
 
 import azure.functions as func
+import cv2
 import numpy as np
 import tensorflow as tf
-from PIL import Image
 from tensorflow import keras
 
 warnings.filterwarnings("ignore")
@@ -35,7 +35,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     # normal = [1, 4, 7, 10, 13, 16, 19, 22, 25, 28]
     # virus = [2, 5, 8, 11, 14, 17, 20, 23, 26, 29]
     # covid = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30]
-    logging.info(np.array(Image.open(os.path.join("mlcovid/images", f"{image_id}.jpg"))))
+    # preprocessed_image = np.array(Image.open(os.path.join("mlcovid/images", f"{image_id}.jpg"))) / 255
+    preprocessed_image = np.array(cv2.resize(cv2.imread(os.path.join("mlcovid/images", f"{image_id}.jpg"))[:,:,::-1], (224, 224))).reshape(1, 224, 224, -1) / 255.0
+    prediction = model.predict(preprocessed_image)
+    # prediction = np.argmax(model.predict(preprocessed_image), axis=1)
+    logging.info(prediction)
 
     # prediction = model.predict(preprocessor.transform(X))[0][0]
     # logging.info(X)
