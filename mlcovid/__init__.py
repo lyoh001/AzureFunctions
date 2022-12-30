@@ -20,8 +20,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         k: [np.nan] if next(iter(v)) == "" else v for k, v in req.get_json().items()
     }
     try:
-        image_id = next(iter(payload["image_id"]))
-        if not 1 <= int(image_id) <= 30:
+        image_id = int(next(iter(payload["image_id"])))
+        if not 1 <= image_id <= 30:
             return func.HttpResponse(
             status_code=200,
             body="Invalid input, please use numbers between 1 and 30.",
@@ -32,21 +32,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             body="Invalid input, please use numbers between 1 and 30.",
         )
 
-    # normal = [1, 4, 7, 10, 13, 16, 19, 22, 25, 28]
-    # virus = [2, 5, 8, 11, 14, 17, 20, 23, 26, 29]
-    # covid = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30]
-    # preprocessed_image = np.array(Image.open(os.path.join("mlcovid/images", f"{image_id}.jpg"))) / 255
+    normal = [1, 2, 4, 7, 8, 10, 13, 16, 19, 20, 22, 25, 28]
+    covid = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30]
+    pneumonia = [5, 11, 14, 17, 23, 26, 29]
+    actual = "Normal" if image_id in normal else "Covid" if image_id in covid else "Pneumonia"
     preprocessed_image = np.array(cv2.resize(cv2.imread(os.path.join("mlcovid/images", f"{image_id}.jpg"))[:,:,::-1], (224, 224))).reshape(1, 224, 224, -1) / 255.0
-    prediction = model.predict(preprocessed_image)
-    # prediction = np.argmax(model.predict(preprocessed_image), axis=1)
-    logging.info(prediction)
-
-    # prediction = model.predict(preprocessor.transform(X))[0][0]
-    # logging.info(X)
-    # logging.info(f"prediction: {prediction}")
+    prediction = ["Normal", "Covid", "Pneumonia"][np.argmax(model.predict(preprocessed_image), axis=1)[0]]
+    logging.info(f"Prediction: {prediction}\tActual: {actual}")
 
     return func.HttpResponse(
         status_code=200,
-        body="test"
-        # body=f"{prediction}"
+        body=f"Prediction: {prediction}\tActual: {actual}"
     )

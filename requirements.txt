@@ -1,7 +1,7 @@
 azure-functions
 black
 numpy
-opencv-python
+opencv-python-headless==4.5.3.56
 pandas
 requests
 scikit-learn==1.0.2
