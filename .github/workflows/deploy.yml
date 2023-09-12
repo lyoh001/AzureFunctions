@@ -1,0 +1,65 @@
+name: Azure Function App
+
+on: [workflow_dispatch]
+
+env:
+  AZURE_FUNCTIONAPP_NAME: "vickk73aifuncapp"
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: "."
+  PYTHON_VERSION: "3.8"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout GitHub Action
+      uses: actions/checkout@v3
+
+    - name: Setup Python ${{ env.PYTHON_VERSION }} Environment
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        architecture: "x64"
+
+    - name: Resolve Project Dependencies Using Pip
+      shell: bash
+      run: |
+        pushd "./${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}"
+        python -m pip install --upgrade pip
+        pip install flake8 pytest
+        pip install -r requirements.txt --upgrade --no-cache-dir --target=".python_packages/lib/site-packages"
+        popd
+
+    - name: Lint with flake8
+
+      run: |
+        flake8 ./mlcenitex --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mlcenitex --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 ./mlcloudaudit --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mlcloudaudit --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 ./mlcoffeeplantdiseases --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mlcoffeeplantdiseases --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 ./mlcovid --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mlcovid --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 ./mldisastertweets --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mldisastertweets --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 ./mlgpt2 --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mlgpt2 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 ./mlmaternalmortality --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mlmaternalmortality --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 ./mlsupplychain --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mlsupplychain --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 ./mltelecom --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mltelecom --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 ./mlwkls --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mlwkls --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 ./mlload --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mlload --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 ./mlping --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mlping --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+  
+    - name: Run Azure Functions Action
+      uses: Azure/functions-action@v1.3.1
+      with:
+        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+        package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}

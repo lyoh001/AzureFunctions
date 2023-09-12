@@ -1,0 +1,19 @@
+{
+	"name": "Dev Container",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"settings": {
+		"terminal.integrated.defaultProfile.linux": "zsh"
+	},
+	"extensions": [
+		"ms-azuretools.vscode-azurefunctions",
+		"ms-azuretools.vscode-azureresourcegroups",
+		"ms-python.python",
+		"ms-vscode.azure-account"
+	],
+	"postCreateCommand": "bash .devcontainer/postbuild.sh",
+	"forwardPorts": [
+		7000
+	]
+}
