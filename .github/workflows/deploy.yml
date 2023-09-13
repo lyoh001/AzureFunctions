@@ -1,9 +1,9 @@
 name: Azure Function App
 
-on: [workflow_dispatch]
+on: [push]
 
 env:
-  AZURE_FUNCTIONAPP_NAME: "vickk73aifuncapp"
+  AZURE_FUNCTIONAPP_NAME: "vickk73aitestfuncapp"
   AZURE_FUNCTIONAPP_PACKAGE_PATH: "."
   PYTHON_VERSION: "3.8"
 
