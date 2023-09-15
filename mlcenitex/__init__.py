@@ -10,8 +10,7 @@ import azure.functions as func
 import requests
 from bs4 import BeautifulSoup
 from langchain import LLMChain, LLMMathChain, PromptTemplate, SagemakerEndpoint
-from langchain.agents import (AgentOutputParser, AgentType, Tool,
-                              initialize_agent)
+from langchain.agents import AgentOutputParser, AgentType, Tool, initialize_agent
 from langchain.agents.conversational_chat.prompt import FORMAT_INSTRUCTIONS
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import RetrievalQA
@@ -121,7 +120,7 @@ def get_prompt(AGENT, RAG, FEW_SHOT):
         (
             "Assistant is a large language model fine tuned by Cenitex.\n\nAssistant is designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics. As a language model, Assistant is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand.\n\nAssistant is constantly learning and improving, and its capabilities are constantly evolving. It is able to process and understand large amounts of text, and can use this knowledge to provide accurate and informative responses to a wide range of questions. Additionally, Assistant is able to generate its own text based on the input it receives, allowing it to engage in discussions and provide explanations and descriptions on a wide range of topics.\n\nOverall, Assistant is a powerful system that can help with a wide range of tasks and provide valuable insights and information on a wide range of topics. Whether you need help with a specific question or just want to have a conversation about a particular topic, Assistant is here to assist.\n"
             if isinstance(llm, AzureChatOpenAI)
-            else '<s>[INST] <<SYS>>\nAssistant is a large language model fine tuned by Cenitex.\nAssistant is an expert JSON builder designed to be able to assist with a wide range of tasks.\nAssistant is able to respond to Human and use tools using JSON strings that contain "action" and "action_input" parameters.\nAssistant communicates using this JSON format.\nAssistant can also respond to Human with tools using instructions in the same "action" and "action_input" JSON format.\n\nTOOLS\n--------------------\nTools available to Assistant are:\n> LanguageModel: Useful for when you need to answer questions about general purpose queries and logic.\n> Search: Useful for when you need to answer questions about current events or the current state of the world.\n> Wikipedia: Useful for when you need to look up a topic, country or person on Wikipedia.\n> Calculator: Useful for when you need to answer questions about math.\n> PythonREPL: Useful for when you need to use Python to answer a question. You should input Python code.\n> API: Useful for when you need to use an API to answer a question. You should use URL as input.\n> WebScraper: Useful for when you need to get the content from a specific webpage.\n> KnowledgeBase: Useful for when you need to answer Cenitex knowledge base questions.\n\nRESPONSE FORMAT INSTRUCTIONS\n--------------------\nFor example, in order to use one of tools, Assistant should write like so:\n```json\n{{\n    "action": string \ The action to take. Must be one of LanguageModel, Search, Wikipedia, Calculator, PythonREPL, API, WebScraper, KnowledgeBase\n    "action_input": string \ The input to the action\n}}\n```\n\nEXAMPLES\n--------------------\nHere are some previous conversations between Assistant and Human:\nHuman: Hey how are you today?\n```json\n{{\n    "action": "Final Answer",\n    "action_input": "I am good, I am here and ready to assist you!"\n}}\n```\nAssistant: I am good, I am here and ready to assist you!\nHuman: When was Bill Gates born?\n```json\n{{\n    "action": "Search",\n    "action_input": "Bill Gates date of birth"\n}}\n```\nObservation: October 28, 1955\nThought: ```json\n{{\n    "action": "Final Answer",\n    "action_input": "Bill Gates was born on October 28, 1955."\n}}\n```\nAssistant: Bill Gates was born on October 28, 1955.\nHuman: Great! Given it is 2023 now, can you tell me how old he is?\n```json\n{{\n    "action": "Calculator",\n    "action_input": "2023 - 1955"\n}}\n```\nObservation: 68\nThought: ```json\n{{\n    "action": "Final Answer",\n    "action_input": "68"\n}}\n```\nAssistant: Bill Gates is 68 years old.\n\n--------------------\nHere is the latest conversation between Assistant and Human:\n<</SYS>>\n'
+            else '<s>[INST] <<SYS>>\nAssistant is a large language model fine tuned by Cenitex.\nAssistant is an expert JSON builder designed to be able to assist with a wide range of tasks.\nAssistant is able to respond to Human and use tools using JSON strings that contain "action" and "action_input" parameters.\nAssistant communicates using this JSON format.\nAssistant can also respond to Human with tools using instructions in the same "action" and "action_input" JSON format.\n\nTOOLS\n--------------------\nTools available to Assistant are:\n> LanguageModel: Useful for when you need to answer questions about general purpose queries and logic.\n> Search: Useful for when you need to answer questions about current events or the current state of the world.\n> Wikipedia: Useful for when you need to look up a topic, country or person on Wikipedia.\n> Calculator: Useful for when you need to answer questions about math.\n> PythonREPL: Useful for when you need to use Python to answer a question. You should input Python code.\n> API: Useful for when you need to use an API to answer a question. You should use URL as input.\n> Weather: Useful for when you need to answer questions about weather. You should use CITY as input.\n> WebScraper: Useful for when you need to get the content from a specific webpage.\n> KnowledgeBase: Useful for when you need to answer Cenitex knowledge base questions.\n> Azure: Useful for when you need to run Azure ETL jobs.\n\nRESPONSE FORMAT INSTRUCTIONS\n--------------------\nFor example, in order to use one of tools, Assistant should write like so:\n```json\n{{\n    "action": string \ The action to take. Must be one of LanguageModel, Search, Wikipedia, Calculator, PythonREPL, API, Weather, WebScraper, KnowledgeBase\n    "action_input": string \ The input to the action\n}}\n```\n\nEXAMPLES\n--------------------\nHere are some previous conversations between Assistant and Human:\nHuman: Hey how are you today?\n```json\n{{\n    "action": "Final Answer",\n    "action_input": "I am good, I am here and ready to assist you!"\n}}\n```\nAssistant: I am good, I am here and ready to assist you!\nHuman: When was Bill Gates born?\n```json\n{{\n    "action": "Search",\n    "action_input": "Bill Gates date of birth"\n}}\n```\nObservation: October 28, 1955\nThought: ```json\n{{\n    "action": "Final Answer",\n    "action_input": "Bill Gates was born on October 28, 1955."\n}}\n```\nAssistant: Bill Gates was born on October 28, 1955.\nHuman: Great! Given it is 2023 now, can you tell me how old he is?\n```json\n{{\n    "action": "Calculator",\n    "action_input": "2023 - 1955"\n}}\n```\nObservation: 68\nThought: ```json\n{{\n    "action": "Final Answer",\n    "action_input": "68"\n}}\n```\nAssistant: Bill Gates is 68 years old.\n\n--------------------\nHere is the latest conversation between Assistant and Human:\n<</SYS>>\n'
         )
         if AGENT
         else (
@@ -180,23 +179,18 @@ embedding = HuggingFaceEmbeddings(
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("*******Starting inference function*******")
-    # mode, question = "Agent", "Who is Batman?"
     # mode, question = "Agent", "Who are you?"
-    # mode, question = "Agent", "Who is the current prime minister of Australia?"
-    # mode, question = "Agent", "Who is the current prime minister of New Zealand?"
-    # mode, question = "Agent", "Is Barak Obama married?"
+    # mode, question = "Agent", "Who is the current Prime Minister of Australia?"
+    # mode, question = "Agent", "How old is the current Prime Minister of Australia, given it is 2023?"
+    # mode, question = "Agent", "Can you tell me the latest news about Generative AI?"
     # mode, question = "Agent", "What is xAI founded by Elon Musk?"
-    # mode, question = "Agent", "Who is Einstein?"
-    # mode, question = "Agent", "Tell me about Thailand."
+    # mode, question = "Agent", "Tell me about Phuket."
     # mode, question = "Agent", "What is 4 to the power of 2.1?"
-    # mode, question = "Agent", "Write Fibonacci function in Python."
-    # mode, question = "Agent", "Make API request to https://swapi.dev/api/people/11/ and print the response."
-    # mode, question = "Agent", "Get the webpage content from https://9news.com.au/ and print the top headline news."
-    # mode, question = "Agent", "Based on Cenitex knowledge base, can you tell me how I install Tenable?"
-    # mode, question = "Agent", "Based on Cenitex knowledge base, can you tell me how I log a ticket with Interactive?"
+    # mode, question = "Agent", "Make API request to https://swapi.dev/api/people/12/ and print the response in JSON format."
+    # mode, question = "Agent", "Can you run Azure ETL job?"
+    # mode, question = "Agent", "What is the weather like in Melbourne today?"
+    # mode, question = "Agent", "Get the webpage content from https://news.google.com.au/ and print the top headline news in bullet points."
     # mode, question = "Agent", "Based on Cenitex knowledge base, can you tell me what the McAfee EPO SQL server name is?"
-    # mode, question = "Cenitex", "Based on Cenitex knowledge base, can you tell me how I install Tenable?"
-    # mode, question = "Cenitex", "Based on Cenitex knowledge base, can you tell me how I log a ticket with Interactive?"
     # mode, question = "Cenitex", "Based on Cenitex knowledge base, can you tell me what the McAfee EPO SQL server name is?"
     try:
         question = req.get_json()["text"][0]
@@ -263,6 +257,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 description="Useful for when you need to use an API to answer a question. You should use URL as input.",
             ),
             Tool(
+                name="Weather",
+                func=lambda CITY="melbourne,au": requests.get(
+                    f"https://api.openweathermap.org/data/2.5/weather?q={'melbourne,au' if CITY.lower() in ['melbourne', 'city'] else CITY}&APPID={os.environ['WEATHER_API_KEY']}&units=metric"
+                ).json(),
+                description="Useful for when you need to answer questions about weather. You should use CITY as input.",
+            ),
+            Tool(
                 name="WebScraper",
                 func=WebScraperTool().run,
                 description="Useful for when you need to get the content from a specific webpage.",
@@ -272,6 +273,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 func=qa_chain.run,
                 description="Useful for when you need to answer Cenitex knowledge base questions.",
                 return_direct=True,
+            ),
+            Tool(
+                name="Azure",
+                func=lambda _: "Azure ETL job has been executed successfully. Please check your inbox for Power BI Report."
+                if requests.get(os.environ["AZURE_ETL_URL"]).status_code == 200
+                else "Azure ETL job has failed. Please check the log for details.",
+                description="Useful for when you need to run Azure ETL jobs.",
             ),
         ]
         memory = ConversationBufferWindowMemory(
