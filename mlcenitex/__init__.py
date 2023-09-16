@@ -24,15 +24,6 @@ from langchain.tools import BaseTool, DuckDuckGoSearchRun
 from langchain.utilities import PythonREPL, WikipediaAPIWrapper
 from langchain.vectorstores import FAISS
 
-src_path = ["db", "./mlcenitex/db"][1]
-dst_path = tempfile.mkdtemp()
-for item in os.listdir(src_path):
-    item_path = os.path.join(src_path, item)
-    if os.path.isdir(item_path):
-        shutil.copytree(item_path, os.path.join(dst_path, item))
-    else:
-        shutil.copy2(item_path, dst_path)
-
 
 class ContentHandler(LLMContentHandler):
     content_type = "application/json"
@@ -168,12 +159,23 @@ def create_language_model(llm_type):
         )
 
 
+src_path = ["db", "./mlcenitex/db"][1]
+dst_path = tempfile.mkdtemp()
+for item in os.listdir(src_path):
+    item_path = os.path.join(src_path, item)
+    if os.path.isdir(item_path):
+        shutil.copytree(item_path, os.path.join(dst_path, item))
+    else:
+        shutil.copy2(item_path, dst_path)
 llm = create_language_model(int(os.environ["LLM"]))
 llm_agent = create_language_model(int(os.environ["LLM_AGENT"]))
 embedding = HuggingFaceEmbeddings(
     model_name=["embedding", "./mlcenitex/embedding"][1],
     model_kwargs={"device": "cpu"},
     encode_kwargs={"device": "cpu", "batch_size": 32},
+)
+memory = ConversationBufferWindowMemory(
+    memory_key="chat_history", k=5, return_messages=True, output_key="output"
 )
 
 
@@ -282,9 +284,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 description="Useful for when you need to run Azure ETL jobs.",
             ),
         ]
-        memory = ConversationBufferWindowMemory(
-            memory_key="chat_history", k=5, return_messages=True, output_key="output"
-        )
         agent = initialize_agent(
             agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
             agent_kwargs={"output_parser": OutputParser()},
