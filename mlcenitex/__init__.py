@@ -159,6 +159,39 @@ def create_language_model(llm_type):
         )
 
 
+def load_memory(id):
+    file_path = os.path.join("/tmp", id)
+    memory = ConversationBufferWindowMemory(
+        memory_key="chat_history", k=5, return_messages=True, output_key="output"
+    )
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, "r") as file:
+                data = json.load(file)
+        except (json.JSONDecodeError, FileNotFoundError):
+            data = []
+        for i, o in zip(data[::2], data[1::2]):
+            memory.save_context(i, o)
+    else:
+        open(file_path, "w").close()
+    return memory
+
+
+def update_memory(id, question, answer):
+    file_path = os.path.join("/tmp", id)
+    new_data = [{"input": question}, {"output": answer}]
+    try:
+        with open(file_path, "r") as file:
+            data = json.load(file)
+    except (json.JSONDecodeError, FileNotFoundError):
+        data = []
+    data.extend(new_data)
+    if len(data) > 10:
+        data = data[-10:]
+    with open(file_path, "w") as file:
+        json.dump(data, file)
+
+
 src_path = ["db", "./mlcenitex/db"][1]
 dst_path = tempfile.mkdtemp()
 for item in os.listdir(src_path):
@@ -174,29 +207,27 @@ embedding = HuggingFaceEmbeddings(
     model_kwargs={"device": "cpu"},
     encode_kwargs={"device": "cpu", "batch_size": 32},
 )
-memory = ConversationBufferWindowMemory(
-    memory_key="chat_history", k=5, return_messages=True, output_key="output"
-)
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("*******Starting inference function*******")
-    # mode, question = "Agent", "Who are you?"
-    # mode, question = "Agent", "Who is the current Prime Minister of Australia?"
-    # mode, question = "Agent", "How old is the current Prime Minister of Australia, given it is 2023?"
-    # mode, question = "Agent", "Can you tell me the latest news about Generative AI?"
-    # mode, question = "Agent", "What is xAI founded by Elon Musk?"
-    # mode, question = "Agent", "Tell me about Phuket."
-    # mode, question = "Agent", "What is 4 to the power of 2.1?"
-    # mode, question = "Agent", "Make API request to https://swapi.dev/api/people/12/ and print the response in JSON format."
-    # mode, question = "Agent", "Can you run Azure ETL job?"
-    # mode, question = "Agent", "What is the weather like in Melbourne today?"
-    # mode, question = "Agent", "Get the webpage content from https://news.google.com.au/ and print the top headline news in bullet points."
-    # mode, question = "Agent", "Based on Cenitex knowledge base, can you tell me what the McAfee EPO SQL server name is?"
-    # mode, question = "Cenitex", "Based on Cenitex knowledge base, can you tell me what the McAfee EPO SQL server name is?"
+    # id, mode, question = "John", "Agent", "Who are you?"
+    # id, mode, question = "John", "Agent", "Who is the current Prime Minister of Australia?"
+    # id, mode, question = "John", "Agent", "How old is the current Prime Minister of Australia, given it is 2023?"
+    # id, mode, question = "John", "Agent", "Can you tell me the latest news about Generative AI?"
+    # id, mode, question = "John", "Agent", "What is xAI founded by Elon Musk?"
+    # id, mode, question = "John", "Agent", "Tell me about Phuket."
+    # id, mode, question = "John", "Agent", "What is 4 to the power of 2.1?"
+    # id, mode, question = "John", "Agent", "Make API request to https://swapi.dev/api/people/12/ and print the response in JSON format."
+    # id, mode, question = "John", "Agent", "Can you run Azure ETL job?"
+    # id, mode, question = "John", "Agent", "What is the weather like in Melbourne today?"
+    # id, mode, question = "John", "Agent", "Get the webpage content from https://news.google.com.au/ and print the top headline news in bullet points."
+    # id, mode, question = "John", "Agent", "Based on Cenitex knowledge base, can you tell me what the McAfee EPO SQL server name is?"
+    # id, mode, question = "John", "Cenitex", "Based on Cenitex knowledge base, can you tell me what the McAfee EPO SQL server name is?"
     try:
-        question = req.get_json()["text"][0]
+        id = req.headers.get("X-MS-CLIENT-PRINCIPAL-NAME")
         mode = req.get_json()["mode"][0]
+        question = req.get_json()["text"][0]
         if question == "":
             return func.HttpResponse(
                 status_code=400, body="Invalid input, please provide a valid text."
@@ -206,10 +237,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             status_code=400, body="Invalid input, please provide a valid text."
         )
-    logging.info(f"Mode: {mode}, Question: {question}")
+    logging.info(f"ID: {id}, Question: {question}")
 
     if mode.lower() == "agent":
-        prefix, suffix, _ = get_prompt(True, False, False)
         vectordb = FAISS.load_local(dst_path, embedding)
         retriever = vectordb.as_retriever(search_kwargs={"k": 3})
         qa_chain = CustomRetrievalTool(
@@ -284,6 +314,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 description="Useful for when you need to run Azure ETL jobs.",
             ),
         ]
+        memory = load_memory(f"{id}.txt")
+        prefix, suffix, _ = get_prompt(True, False, False)
         agent = initialize_agent(
             agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
             agent_kwargs={"output_parser": OutputParser()},
@@ -301,6 +333,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             agent.agent.llm_chain.prompt.messages[2].prompt.template = suffix
         try:
             output = agent.run(question)
+            update_memory(f"{id}.txt", question, output)
             return func.HttpResponse(output, status_code=200)
 
         except Exception as e:
