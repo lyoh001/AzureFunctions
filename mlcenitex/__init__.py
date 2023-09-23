@@ -10,7 +10,8 @@ import azure.functions as func
 import requests
 from bs4 import BeautifulSoup
 from langchain import LLMChain, LLMMathChain, PromptTemplate, SagemakerEndpoint
-from langchain.agents import AgentOutputParser, AgentType, Tool, initialize_agent
+from langchain.agents import (AgentOutputParser, AgentType, Tool,
+                              initialize_agent)
 from langchain.agents.conversational_chat.prompt import FORMAT_INSTRUCTIONS
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import RetrievalQA
@@ -38,7 +39,7 @@ class ContentHandler(LLMContentHandler):
                 "max_new_tokens": int(os.environ["MAX_TOKENS"]),
                 "repitition_penalty": 1.03,
                 "stop": ["</s>"],
-                "temperature": [0.1, 0.7, 1.0][0],
+                "temperature": float(os.environ["TEMPERATURE"]),
                 "top_k": 50,
                 "top_p": 0.6,
             },
@@ -148,21 +149,23 @@ def create_language_model(llm_type):
         return AzureChatOpenAI(
             deployment_name=os.environ["OPENAI_DEPLOYMENT_NAME"],
             model_name=os.environ["OPENAI_MODEL_NAME"],
+            temperature=float(os.environ["TEMPERATURE"]),
+            callbacks=[StreamingStdOutCallbackHandler()]
         )
     else:
         return SagemakerEndpoint(
-            callbacks=[StreamingStdOutCallbackHandler()],
-            content_handler=ContentHandler(),
-            endpoint_kwargs={"CustomAttributes": "accept_eula=true"},
             endpoint_name=os.environ["AWS_ENDPOINT_NAME"],
+            endpoint_kwargs={"CustomAttributes": "accept_eula=true"},
             region_name=os.environ["AWS_DEFAULT_REGION"],
+            content_handler=ContentHandler(),
+            callbacks=[StreamingStdOutCallbackHandler()],
         )
 
 
 def load_memory(id):
     file_path = os.path.join("/tmp", id)
     memory = ConversationBufferWindowMemory(
-        memory_key="chat_history", k=5, return_messages=True, output_key="output"
+        memory_key="chat_history", k=3, return_messages=True, output_key="output"
     )
     if os.path.exists(file_path):
         try:
@@ -186,8 +189,8 @@ def update_memory(id, question, answer):
     except (json.JSONDecodeError, FileNotFoundError):
         data = []
     data.extend(new_data)
-    if len(data) > 10:
-        data = data[-10:]
+    if len(data) > 6:
+        data = data[-6:]
     with open(file_path, "w") as file:
         json.dump(data, file)
 
@@ -225,7 +228,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     # id, mode, question = "John", "Agent", "Based on Cenitex knowledge base, can you tell me what the McAfee EPO SQL server name is?"
     # id, mode, question = "John", "Cenitex", "Based on Cenitex knowledge base, can you tell me what the McAfee EPO SQL server name is?"
     try:
-        id = req.headers.get("X-MS-CLIENT-PRINCIPAL-NAME")
+        id = pn if (pn := req.headers.get("X-MS-CLIENT-PRINCIPAL-NAME")) else "annonymous"
         mode = req.get_json()["mode"][0]
         question = req.get_json()["text"][0]
         if question == "":
