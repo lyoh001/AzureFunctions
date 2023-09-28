@@ -10,8 +10,7 @@ import azure.functions as func
 import requests
 from bs4 import BeautifulSoup
 from langchain import LLMChain, LLMMathChain, PromptTemplate, SagemakerEndpoint
-from langchain.agents import (AgentOutputParser, AgentType, Tool,
-                              initialize_agent)
+from langchain.agents import AgentOutputParser, AgentType, Tool, initialize_agent
 from langchain.agents.conversational_chat.prompt import FORMAT_INSTRUCTIONS
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import RetrievalQA
@@ -97,11 +96,14 @@ class CustomRetrievalTool(BaseTool):
     def _run(self, question: str):
         response = self.retriever({"question": question})
         source_documents = (
-            "\n".join(doc.page_content for doc in response["source_documents"])
+            "===\n\n".join(
+                f"Context {i+1}: Source {doc.metadata['source']}\n{doc.page_content}\n\n"
+                for i, doc in enumerate(response["source_documents"])
+            )
             if not isinstance(llm, SagemakerEndpoint)
             else ""
         )
-        return f"{source_documents}\n\n{response['result']}"
+        return f"===\n\n{source_documents}===\n\nAnswer\n{response['result']}"
 
     async def _arun(self, question: str):
         raise NotImplementedError("CustomRetrievalTool does not support async.")
@@ -150,7 +152,7 @@ def create_language_model(llm_type):
             deployment_name=os.environ["OPENAI_DEPLOYMENT_NAME"],
             model_name=os.environ["OPENAI_MODEL_NAME"],
             temperature=float(os.environ["TEMPERATURE"]),
-            callbacks=[StreamingStdOutCallbackHandler()]
+            callbacks=[StreamingStdOutCallbackHandler()],
         )
     else:
         return SagemakerEndpoint(
@@ -228,7 +230,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     # id, mode, question = "John", "Agent", "Based on Cenitex knowledge base, can you tell me what the McAfee EPO SQL server name is?"
     # id, mode, question = "John", "Cenitex", "Based on Cenitex knowledge base, can you tell me what the McAfee EPO SQL server name is?"
     try:
-        id = pn if (pn := req.headers.get("X-MS-CLIENT-PRINCIPAL-NAME")) else "annonymous"
+        id = (
+            pn
+            if (pn := req.headers.get("X-MS-CLIENT-PRINCIPAL-NAME"))
+            else "annonymous"
+        )
         mode = req.get_json()["mode"][0]
         question = req.get_json()["text"][0]
         if question == "":
@@ -360,11 +366,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
         response = qa_chain(question)
         source_documents = (
-            "\n".join(doc.page_content for doc in response["source_documents"])
+            "===\n\n".join(
+                f"Context {i+1}: Source {doc.metadata['source']}\n{doc.page_content}\n\n"
+                for i, doc in enumerate(response["source_documents"])
+            )
             if not isinstance(llm, SagemakerEndpoint)
             else ""
         )
-        output = f"{source_documents}\n\n{response['result']}"
+        output = f"===\n\n{source_documents}===\n\nAnswer\n{response['result']}"
         output = output.replace(
             "<s>[INST] <<SYS>>\nYou are a helpful, respectful and honest assistant who is fine tuned by Cenitex. Always answer as helpfully as possible, using the context text provided. Your answers should only answer the question once and not have any text after the answer is done. If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n",
             "",
