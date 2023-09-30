@@ -5,7 +5,7 @@ boto3
 faiss-cpu
 huggingface_hub
 langchain
-nemoguardrails
+# nemoguardrails
 openai
 py-bing-search
 requests

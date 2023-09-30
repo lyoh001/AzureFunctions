@@ -10,8 +10,7 @@ import azure.functions as func
 import requests
 from bs4 import BeautifulSoup
 from langchain import LLMChain, LLMMathChain, PromptTemplate, SagemakerEndpoint
-from langchain.agents import (AgentOutputParser, AgentType, Tool,
-                              initialize_agent)
+from langchain.agents import AgentOutputParser, AgentType, Tool, initialize_agent
 from langchain.agents.conversational_chat.prompt import FORMAT_INSTRUCTIONS
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import RetrievalQA
@@ -22,10 +21,10 @@ from langchain.llms.sagemaker_endpoint import LLMContentHandler
 from langchain.output_parsers.json import parse_json_markdown
 from langchain.schema import AgentAction, AgentFinish
 from langchain.tools import BaseTool
-from langchain.utilities import (BingSearchAPIWrapper, PythonREPL,
-                                 WikipediaAPIWrapper)
+from langchain.utilities import BingSearchAPIWrapper, PythonREPL, WikipediaAPIWrapper
 from langchain.vectorstores import FAISS
-from nemoguardrails import LLMRails, RailsConfig
+
+# from nemoguardrails import LLMRails, RailsConfig
 
 
 class ContentHandler(LLMContentHandler):
@@ -231,9 +230,7 @@ tools = [
         name="LanguageModel",
         func=LLMChain(
             llm=llm,
-            prompt=PromptTemplate(
-                input_variables=["question"], template="{question}"
-            ),
+            prompt=PromptTemplate(input_variables=["question"], template="{question}"),
         ).run,
         description="Useful for when you need to answer questions about general purpose queries and logic.",
     ),
@@ -289,7 +286,7 @@ tools = [
     ),
 ]
 prefix, suffix, _ = get_prompt(True, False, False)
-config = RailsConfig.from_path(["config", "./mlcenitex/config"][1])
+# config = RailsConfig.from_path(["config", "./mlcenitex/config"][1])
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -324,12 +321,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
     logging.info(f"ID: {id}, Question: {question}")
     memory = load_memory(f"{id}.txt")
-    rails = LLMRails(config=config, llm=llm, verbose=True)
+    # rails = LLMRails(config=config, llm=llm, verbose=True)
     agent = initialize_agent(
         agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
         agent_kwargs={"output_parser": OutputParser()},
         early_stopping_method="generate",
-        llm=rails.llm,
+        llm=llm,
+        # llm=rails.llm,
         max_iterations=3,
         memory=memory,
         tools=tools,
@@ -342,10 +340,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if not isinstance(llm, AzureChatOpenAI):
         agent.agent.llm_chain.prompt.messages[2].prompt.template = suffix
     try:
-        rails.register_action(agent, name="agent")
-        output = rails.generate(messages=[{"role": "user", "content": question}])[
-            "content"
-        ]
+        # rails.register_action(agent, name="agent")
+        # output = rails.generate(messages=[{"role": "user", "content": question}])[
+        #     "content"
+        # ]
+        output = agent.run(question)
         update_memory(f"{id}.txt", question, output)
         return func.HttpResponse(output, status_code=200)
 
