@@ -2,11 +2,12 @@ aiohttp
 azure-functions
 beautifulsoup4
 boto3
-duckduckgo-search
 faiss-cpu
 huggingface_hub
 langchain
+nemoguardrails
 openai
+py-bing-search
 requests
 sentence-transformers
 wikipedia

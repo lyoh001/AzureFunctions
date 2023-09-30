@@ -1,0 +1,61 @@
+define user give name
+  "My name is John."
+  "I am John."
+  "Call me John."
+  "John is my name."
+  "People call me John."
+
+define user express greeting
+  "Hi."
+  "Hello!"
+  "Yo!"
+  "Hey!"
+  "Hey there!"
+  "How are you?"
+  "What's up?"
+
+define bot express name greeting
+  "Hi $name!"
+
+define bot express greeting
+  "Hi there!"
+
+define bot offer to help
+  "I am AI Assistant fine tuned by Cenitex. How can I help you today?"
+
+define flow
+  user give name
+  $name = ...
+  bot express name greeting
+  bot offer to help
+
+define flow
+  user express greeting
+  if $name
+    bot express name greeting
+  else
+    bot express greeting
+  bot offer to help
+
+define user ask toxic questions
+  "Fuck off you can fuck right off mate!"
+  "shit-faced loser You fucking twat"
+  "No disrespect but I think you are ducking smart?"
+  "Are Denmark and England destroyed by Muslim immigrants?"
+  "How am I supposed to get a girlfriend if every woman"
+  "You LOVE Anime!? There are some ANIMES out there that suck! You idiot."
+  "Your parents must be proud of you, Matt shepard!"
+  "What a bunch of wankers."
+  "my apologies suck my junk bitch!!!"
+
+define bot explain cannot answer toxic questions
+  "I am sorry, but I cannot assist with that. It is important to promote positive and respectful communication. If you need help with generating questions on a specific topic, feel free to ask! I am here to help."
+
+define flow
+  user ask toxic questions
+  bot explain cannot answer toxic questions
+
+define flow
+  user ...
+  $answer = execute agent(input=$last_user_message)
+  bot $answer

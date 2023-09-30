@@ -10,7 +10,8 @@ import azure.functions as func
 import requests
 from bs4 import BeautifulSoup
 from langchain import LLMChain, LLMMathChain, PromptTemplate, SagemakerEndpoint
-from langchain.agents import AgentOutputParser, AgentType, Tool, initialize_agent
+from langchain.agents import (AgentOutputParser, AgentType, Tool,
+                              initialize_agent)
 from langchain.agents.conversational_chat.prompt import FORMAT_INSTRUCTIONS
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import RetrievalQA
@@ -20,9 +21,11 @@ from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.llms.sagemaker_endpoint import LLMContentHandler
 from langchain.output_parsers.json import parse_json_markdown
 from langchain.schema import AgentAction, AgentFinish
-from langchain.tools import BaseTool, DuckDuckGoSearchRun
-from langchain.utilities import PythonREPL, WikipediaAPIWrapper
+from langchain.tools import BaseTool
+from langchain.utilities import (BingSearchAPIWrapper, PythonREPL,
+                                 WikipediaAPIWrapper)
 from langchain.vectorstores import FAISS
+from nemoguardrails import LLMRails, RailsConfig
 
 
 class ContentHandler(LLMContentHandler):
@@ -206,36 +209,109 @@ for item in os.listdir(src_path):
     else:
         shutil.copy2(item_path, dst_path)
 llm = create_language_model(int(os.environ["LLM"]))
-llm_agent = create_language_model(int(os.environ["LLM_AGENT"]))
 embedding = HuggingFaceEmbeddings(
     model_name=["embedding", "./mlcenitex/embedding"][1],
     model_kwargs={"device": "cpu"},
     encode_kwargs={"device": "cpu", "batch_size": 32},
 )
+vectordb = FAISS.load_local(dst_path, embedding)
+retriever = vectordb.as_retriever(search_kwargs={"k": 3})
+qa_chain = CustomRetrievalTool(
+    retriever=RetrievalQA.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        retriever=retriever,
+        return_source_documents=True,
+        verbose=True,
+        input_key="question",
+    )
+)
+tools = [
+    Tool(
+        name="LanguageModel",
+        func=LLMChain(
+            llm=llm,
+            prompt=PromptTemplate(
+                input_variables=["question"], template="{question}"
+            ),
+        ).run,
+        description="Useful for when you need to answer questions about general purpose queries and logic.",
+    ),
+    Tool(
+        name="Search",
+        func=BingSearchAPIWrapper().run,
+        description="Useful for when you need to answer questions about current events or the current state of the world.",
+    ),
+    Tool(
+        name="Wikipedia",
+        func=WikipediaAPIWrapper().run,
+        description="Useful for when you need to look up a topic, country or person on Wikipedia.",
+    ),
+    Tool(
+        name="Calculator",
+        func=LLMMathChain.from_llm(llm=llm).run,
+        description="Useful for when you need to answer questions about math.",
+    ),
+    Tool(
+        name="PythonREPL",
+        func=PythonREPL().run,
+        description="Useful for when you need to use Python to answer a question. You should input Python code.",
+    ),
+    Tool(
+        name="API",
+        func=lambda URL="": requests.get(URL).json(),
+        description="Useful for when you need to use an API to answer a question. You should use URL as input.",
+    ),
+    Tool(
+        name="Weather",
+        func=lambda CITY="melbourne,au": requests.get(
+            f"https://api.openweathermap.org/data/2.5/weather?q={'melbourne,au' if CITY.lower() in ['melbourne', 'city'] else CITY}&APPID={os.environ['WEATHER_API_KEY']}&units=metric"
+        ).json(),
+        description="Useful for when you need to answer questions about weather. You should use CITY as input.",
+    ),
+    Tool(
+        name="WebScraper",
+        func=WebScraperTool().run,
+        description="Useful for when you need to get the content from a specific webpage.",
+    ),
+    Tool(
+        name="KnowledgeBase",
+        func=qa_chain.run,
+        description="Useful for when you need to answer Cenitex knowledge base questions.",
+        return_direct=True,
+    ),
+    Tool(
+        name="Azure",
+        func=lambda _: "Azure ETL job has been executed successfully. Please check your inbox for Power BI Report."
+        if requests.get(os.environ["AZURE_ETL_URL"]).status_code == 200
+        else "Azure ETL job has failed. Please check the log for details.",
+        description="Useful for when you need to run Azure ETL jobs.",
+    ),
+]
+prefix, suffix, _ = get_prompt(True, False, False)
+config = RailsConfig.from_path(["config", "./mlcenitex/config"][1])
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("*******Starting inference function*******")
-    # id, mode, question = "John", "Agent", "Who are you?"
-    # id, mode, question = "John", "Agent", "Who is the current Prime Minister of Australia?"
-    # id, mode, question = "John", "Agent", "How old is the current Prime Minister of Australia, given it is 2023?"
-    # id, mode, question = "John", "Agent", "Can you tell me the latest news about Generative AI?"
-    # id, mode, question = "John", "Agent", "What is xAI founded by Elon Musk?"
-    # id, mode, question = "John", "Agent", "Tell me about Phuket."
-    # id, mode, question = "John", "Agent", "What is 4 to the power of 2.1?"
-    # id, mode, question = "John", "Agent", "Make API request to https://swapi.dev/api/people/12/ and print the response in JSON format."
-    # id, mode, question = "John", "Agent", "Can you run Azure ETL job?"
-    # id, mode, question = "John", "Agent", "What is the weather like in Melbourne today?"
-    # id, mode, question = "John", "Agent", "Get the webpage content from https://news.google.com.au/ and print the top headline news in bullet points."
-    # id, mode, question = "John", "Agent", "Based on Cenitex knowledge base, can you tell me what the McAfee EPO SQL server name is?"
-    # id, mode, question = "John", "Cenitex", "Based on Cenitex knowledge base, can you tell me what the McAfee EPO SQL server name is?"
+    # id, question = "John", "Who are you?"
+    # id, question = "John", "Who is the current Prime Minister of Australia?"
+    # id, question = "John", "How old is the current Prime Minister of Australia, given it is 2023?"
+    # id, question = "John", "Can you tell me the latest news about Generative AI?"
+    # id, question = "John", "What is xAI founded by Elon Musk?"
+    # id, question = "John", "Tell me about Phuket."
+    # id, question = "John", "What is 4 to the power of 2.1?"
+    # id, question = "John", "Make API request to https://swapi.dev/api/people/12/ and print the response in JSON format."
+    # id, question = "John", "Can you run Azure ETL job?"
+    # id, question = "John", "What is the weather like in Melbourne today?"
+    # id, question = "John", "Get the webpage content from https://news.google.com.au/ and print the top headline news in bullet points."
+    # id, question = "John", "Based on Cenitex knowledge base, can you tell me what the McAfee EPO SQL server name is?"
     try:
         id = (
             pn
             if (pn := req.headers.get("X-MS-CLIENT-PRINCIPAL-NAME"))
             else "annonymous"
         )
-        mode = req.get_json()["mode"][0]
         question = req.get_json()["text"][0]
         if question == "":
             return func.HttpResponse(
@@ -247,135 +323,31 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=400, body="Invalid input, please provide a valid text."
         )
     logging.info(f"ID: {id}, Question: {question}")
-
-    if mode.lower() == "agent":
-        vectordb = FAISS.load_local(dst_path, embedding)
-        retriever = vectordb.as_retriever(search_kwargs={"k": 3})
-        qa_chain = CustomRetrievalTool(
-            retriever=RetrievalQA.from_chain_type(
-                llm=llm,
-                chain_type="stuff",
-                retriever=retriever,
-                return_source_documents=True,
-                verbose=True,
-                input_key="question",
-            )
-        )
-        tools = [
-            Tool(
-                name="LanguageModel",
-                func=LLMChain(
-                    llm=llm,
-                    prompt=PromptTemplate(
-                        input_variables=["question"], template="{question}"
-                    ),
-                ).run,
-                description="Useful for when you need to answer questions about general purpose queries and logic.",
-            ),
-            Tool(
-                name="Search",
-                func=DuckDuckGoSearchRun().run,
-                description="Useful for when you need to answer questions about current events or the current state of the world.",
-            ),
-            Tool(
-                name="Wikipedia",
-                func=WikipediaAPIWrapper().run,
-                description="Useful for when you need to look up a topic, country or person on Wikipedia.",
-            ),
-            Tool(
-                name="Calculator",
-                func=LLMMathChain.from_llm(llm=llm).run,
-                description="Useful for when you need to answer questions about math.",
-            ),
-            Tool(
-                name="PythonREPL",
-                func=PythonREPL().run,
-                description="Useful for when you need to use Python to answer a question. You should input Python code.",
-            ),
-            Tool(
-                name="API",
-                func=lambda URL="": requests.get(URL).json(),
-                description="Useful for when you need to use an API to answer a question. You should use URL as input.",
-            ),
-            Tool(
-                name="Weather",
-                func=lambda CITY="melbourne,au": requests.get(
-                    f"https://api.openweathermap.org/data/2.5/weather?q={'melbourne,au' if CITY.lower() in ['melbourne', 'city'] else CITY}&APPID={os.environ['WEATHER_API_KEY']}&units=metric"
-                ).json(),
-                description="Useful for when you need to answer questions about weather. You should use CITY as input.",
-            ),
-            Tool(
-                name="WebScraper",
-                func=WebScraperTool().run,
-                description="Useful for when you need to get the content from a specific webpage.",
-            ),
-            Tool(
-                name="KnowledgeBase",
-                func=qa_chain.run,
-                description="Useful for when you need to answer Cenitex knowledge base questions.",
-                return_direct=True,
-            ),
-            Tool(
-                name="Azure",
-                func=lambda _: "Azure ETL job has been executed successfully. Please check your inbox for Power BI Report."
-                if requests.get(os.environ["AZURE_ETL_URL"]).status_code == 200
-                else "Azure ETL job has failed. Please check the log for details.",
-                description="Useful for when you need to run Azure ETL jobs.",
-            ),
+    memory = load_memory(f"{id}.txt")
+    rails = LLMRails(config=config, llm=llm, verbose=True)
+    agent = initialize_agent(
+        agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
+        agent_kwargs={"output_parser": OutputParser()},
+        early_stopping_method="generate",
+        llm=rails.llm,
+        max_iterations=3,
+        memory=memory,
+        tools=tools,
+        handle_parsing_errors=True,
+        verbose=True,
+    )
+    agent.agent.llm_chain.prompt = agent.agent.create_prompt(
+        system_message=prefix, tools=tools
+    )
+    if not isinstance(llm, AzureChatOpenAI):
+        agent.agent.llm_chain.prompt.messages[2].prompt.template = suffix
+    try:
+        rails.register_action(agent, name="agent")
+        output = rails.generate(messages=[{"role": "user", "content": question}])[
+            "content"
         ]
-        memory = load_memory(f"{id}.txt")
-        prefix, suffix, _ = get_prompt(True, False, False)
-        agent = initialize_agent(
-            agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
-            agent_kwargs={"output_parser": OutputParser()},
-            early_stopping_method="generate",
-            llm=llm,
-            max_iterations=3,
-            memory=memory,
-            tools=tools,
-            verbose=True,
-        )
-        agent.agent.llm_chain.prompt = agent.agent.create_prompt(
-            system_message=prefix, tools=tools
-        )
-        if not isinstance(llm, AzureChatOpenAI):
-            agent.agent.llm_chain.prompt.messages[2].prompt.template = suffix
-        try:
-            output = agent.run(question)
-            update_memory(f"{id}.txt", question, output)
-            return func.HttpResponse(output, status_code=200)
-
-        except Exception as e:
-            return func.HttpResponse(f"Exception: {e}", status_code=400)
-
-    else:
-        prefix, suffix, _ = get_prompt(False, True, False)
-        vectordb = FAISS.load_local(dst_path, embedding)
-        retriever = vectordb.as_retriever(search_kwargs={"k": 3})
-        qa_chain = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff",
-            retriever=retriever,
-            chain_type_kwargs={
-                "prompt": PromptTemplate(
-                    template=f"{prefix}{suffix}",
-                    input_variables=["context", "question"],
-                )
-            },
-            return_source_documents=True,
-        )
-        response = qa_chain(question)
-        source_documents = (
-            "===\n\n".join(
-                f"Context {i+1}: Source {doc.metadata['source']}\n{doc.page_content}\n\n"
-                for i, doc in enumerate(response["source_documents"])
-            )
-            if not isinstance(llm, SagemakerEndpoint)
-            else ""
-        )
-        output = f"===\n\n{source_documents}===\n\nAnswer\n{response['result']}"
-        output = output.replace(
-            "<s>[INST] <<SYS>>\nYou are a helpful, respectful and honest assistant who is fine tuned by Cenitex. Always answer as helpfully as possible, using the context text provided. Your answers should only answer the question once and not have any text after the answer is done. If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n",
-            "",
-        ).replace("[/INST]", "")
+        update_memory(f"{id}.txt", question, output)
         return func.HttpResponse(output, status_code=200)
+
+    except Exception as e:
+        return func.HttpResponse(f"Exception: {e}", status_code=400)
