@@ -3,23 +3,26 @@ import logging
 import os
 import re
 import shutil
+import sys
 import tempfile
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import azure.functions as func
 import requests
 from bs4 import BeautifulSoup
-from langchain import LLMChain, LLMMathChain, PromptTemplate, SagemakerEndpoint
+from langchain import SagemakerEndpoint
 from langchain.agents import AgentOutputParser, AgentType, Tool, initialize_agent
 from langchain.agents.conversational_chat.prompt import FORMAT_INSTRUCTIONS
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.chains import RetrievalQA
+from langchain.chains import LLMChain, LLMMathChain, RetrievalQA
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 from langchain.chat_models import AzureChatOpenAI
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.llms.sagemaker_endpoint import LLMContentHandler
 from langchain.output_parsers.json import parse_json_markdown
-from langchain.schema import AgentAction, AgentFinish
+from langchain.prompts import PromptTemplate
+from langchain.schema import AgentAction, AgentFinish, LLMResult
+from langchain.schema.messages import BaseMessage
 from langchain.tools import BaseTool
 from langchain.utilities import BingSearchAPIWrapper, PythonREPL, WikipediaAPIWrapper
 from langchain.vectorstores import FAISS
@@ -71,6 +74,44 @@ class OutputParser(AgentOutputParser):
     @property
     def _type(self) -> str:
         return "conversational_chat"
+
+
+class CallbackHandler(StreamingStdOutCallbackHandler):
+    content: str = ""
+    final_answer: bool = False
+    json_format: bool = False
+
+    def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
+        self.content += token
+        if "{" in self.content:
+            self.json_format = True
+        if self.json_format:
+            if self.final_answer:
+                if '"action_input": "' in self.content:
+                    if token not in ['"', "}"]:
+                        sys.stdout.write(token)
+                        sys.stdout.flush()
+            if "Final Answer" in self.content:
+                self.final_answer = True
+                self.content = ""
+        else:
+            sys.stdout.write(token)
+            sys.stdout.flush()
+
+    def on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:
+        if self.final_answer:
+            self.content = ""
+            self.final_answer = False
+        else:
+            self.content = ""
+
+    def on_chat_model_start(
+        self,
+        serialized: Dict[str, Any],
+        messages: List[List[BaseMessage]],
+        **kwargs: Any,
+    ) -> None:
+        pass
 
 
 class WebScraperTool(BaseTool):
@@ -148,24 +189,6 @@ def get_prompt(AGENT, RAG, FEW_SHOT):
     )
 
 
-def create_language_model(llm_type):
-    if llm_type == 1:
-        return AzureChatOpenAI(
-            deployment_name=os.environ["OPENAI_DEPLOYMENT_NAME"],
-            model_name=os.environ["OPENAI_MODEL_NAME"],
-            temperature=float(os.environ["TEMPERATURE"]),
-            callbacks=[StreamingStdOutCallbackHandler()],
-        )
-    else:
-        return SagemakerEndpoint(
-            endpoint_name=os.environ["AWS_ENDPOINT_NAME"],
-            endpoint_kwargs={"CustomAttributes": "accept_eula=true"},
-            region_name=os.environ["AWS_DEFAULT_REGION"],
-            content_handler=ContentHandler(),
-            callbacks=[StreamingStdOutCallbackHandler()],
-        )
-
-
 def load_memory(id):
     file_path = os.path.join("/tmp", id)
     memory = ConversationBufferWindowMemory(
@@ -199,7 +222,26 @@ def update_memory(id, question, answer):
         json.dump(data, file)
 
 
-src_path = ["db", "./mlcenitex/db"][1]
+def create_language_model(llm_type):
+    if llm_type == 1:
+        return AzureChatOpenAI(
+            deployment_name=os.environ["OPENAI_DEPLOYMENT_NAME"],
+            model_name=os.environ["OPENAI_MODEL_NAME"],
+            temperature=float(os.environ["TEMPERATURE"]),
+            streaming=True,
+            callbacks=[StreamingStdOutCallbackHandler()],
+        )
+    else:
+        return SagemakerEndpoint(
+            endpoint_name=os.environ["AWS_ENDPOINT_NAME"],
+            endpoint_kwargs={"CustomAttributes": "accept_eula=true"},
+            region_name=os.environ["AWS_DEFAULT_REGION"],
+            content_handler=ContentHandler(),
+            callbacks=[StreamingStdOutCallbackHandler()],
+        )
+
+
+src_path = "./mlcenitex/db"
 dst_path = tempfile.mkdtemp()
 for item in os.listdir(src_path):
     item_path = os.path.join(src_path, item)
@@ -209,12 +251,12 @@ for item in os.listdir(src_path):
         shutil.copy2(item_path, dst_path)
 llm = create_language_model(int(os.environ["LLM"]))
 embedding = HuggingFaceEmbeddings(
-    model_name=["embedding", "./mlcenitex/embedding"][1],
+    model_name="./mlcenitex/embedding",
     model_kwargs={"device": "cpu"},
     encode_kwargs={"device": "cpu", "batch_size": 32},
 )
 vectordb = FAISS.load_local(dst_path, embedding)
-retriever = vectordb.as_retriever(search_kwargs={"k": 3})
+retriever = vectordb.as_retriever(search_kwargs={"k": 2})
 qa_chain = CustomRetrievalTool(
     retriever=RetrievalQA.from_chain_type(
         llm=llm,
@@ -291,7 +333,7 @@ prefix, suffix, _ = get_prompt(True, False, False)
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("*******Starting inference function*******")
-    # id, question = "John", "Who are you?"
+    # id, question = "John", "Write a long story."
     # id, question = "John", "Who is the current Prime Minister of Australia?"
     # id, question = "John", "How old is the current Prime Minister of Australia, given it is 2023?"
     # id, question = "John", "Can you tell me the latest news about Generative AI?"
@@ -332,8 +374,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         memory=memory,
         tools=tools,
         handle_parsing_errors=True,
+        return_intermediate_steps=False,
         verbose=True,
     )
+    agent.agent.llm_chain.llm.callbacks = [CallbackHandler()]
     agent.agent.llm_chain.prompt = agent.agent.create_prompt(
         system_message=prefix, tools=tools
     )
