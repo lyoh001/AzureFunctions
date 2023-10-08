@@ -14,7 +14,7 @@ from langchain import SagemakerEndpoint
 from langchain.agents import AgentOutputParser, AgentType, Tool, initialize_agent
 from langchain.agents.conversational_chat.prompt import FORMAT_INSTRUCTIONS
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.chains import LLMChain, LLMMathChain, RetrievalQA
+from langchain.chains import LLMChain, RetrievalQA
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 from langchain.chat_models import AzureChatOpenAI
 from langchain.embeddings import HuggingFaceEmbeddings
@@ -285,11 +285,6 @@ tools = [
         name="Wikipedia",
         func=WikipediaAPIWrapper().run,
         description="Useful for when you need to look up a topic, country or person on Wikipedia.",
-    ),
-    Tool(
-        name="Calculator",
-        func=LLMMathChain.from_llm(llm=llm).run,
-        description="Useful for when you need to answer questions about math.",
     ),
     Tool(
         name="PythonREPL",
