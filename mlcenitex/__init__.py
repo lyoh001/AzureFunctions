@@ -328,7 +328,7 @@ prefix, suffix, _ = get_prompt(True, False, False)
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("*******Starting inference function*******")
-    # id, question = "John", "Write a long story."
+    # id, question = "John", "Write a very long story."
     # id, question = "John", "Who is the current Prime Minister of Australia?"
     # id, question = "John", "How old is the current Prime Minister of Australia, given it is 2023?"
     # id, question = "John", "Can you tell me the latest news about Generative AI?"
