@@ -35,7 +35,9 @@ A Power BI dashboard is available to provide a visual representation of the data
 ## 4. Azure Static Web App for ML Prediction Demo
 
 Experience the capabilities of various machine learning models through interactive web application demos. Check out the following demos:
+
 [![Demo Video](http://img.youtube.com/vi/n7iDGMlTXSQ/0.jpg)](https://www.youtube.com/watch?v=n7iDGMlTXSQ)
+
 - [LLM (Large Language Model) Web Application Demo 1](https://lyoh001.com/mlcenitex)
 - [LLM (Large Language Model) Web Application Demo 2](https://lyoh001.com/mldisastertweets)
 - [LLM (Large Language Model) Web Application Demo 3](https://lyoh001.com/mlgpt2)
