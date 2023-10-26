@@ -19,6 +19,8 @@ https://download.pytorch.org/whl/cpu/torch-2.0.1%2Bcpu-cp38-cp38-linux_x86_64.wh
 # numpy
 opencv-python-headless==4.5.3.56
 pandas==1.5.3
+PyPDF2
+reportlab
 # requests
 scikit-learn==1.0.2
 tflite-runtime
