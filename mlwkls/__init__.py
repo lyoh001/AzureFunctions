@@ -35,6 +35,29 @@ def get_rating(rating):
     }.get(rating, "Unknown")
 
 
+def generate_chart(previous_semester, current_semester):
+    difference_semester = current_semester - previous_semester
+    score = ""
+    if difference_semester > 0:
+        score = f"X{'-------------------------' * abs(difference_semester)}O"
+    elif difference_semester < 0:
+        score = f"O{'-------------------------' * abs(difference_semester)}X"
+    else:
+        score = "X-O"
+
+    if min(previous_semester, current_semester) == 0:
+        text_x = 165
+    elif min(previous_semester, current_semester) == 1:
+        text_x = 250
+    elif min(previous_semester, current_semester) == 2:
+        text_x = 335
+    elif min(previous_semester, current_semester) == 3:
+        text_x = 420
+    else:
+        text_x = 505
+    return text_x, score
+
+
 def add_text_to_pdf(input_path, output_path, text_content, x, y, max_width, font_size):
     pdf_reader = PdfReader(input_path)
     pdf_writer = PdfWriter()
@@ -77,8 +100,7 @@ def add_text_to_pdf(input_path, output_path, text_content, x, y, max_width, font
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("*******Starting brush function*******")
-
+    logging.info("*******Starting Report function*******")
     try:
         user_input = req.get_json()
         student_name = user_input["studentName"]
@@ -86,17 +108,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         attendance = user_input["attendance"]
         effort = user_input["effort"]
         behavior = user_input["behavior"]
-        listening_previous_semester = user_input["listeningPreviousSemester"]
-        listening_current_semester = user_input["listeningCurrentSemester"]
+        listening_previous_semester = int(user_input["listeningPreviousSemester"])
+        listening_current_semester = int(user_input["listeningCurrentSemester"])
         listening_skills = user_input["listeningSkills"]
-        reading_previous_semester = user_input["readingPreviousSemester"]
-        reading_current_semester = user_input["readingCurrentSemester"]
+        reading_previous_semester = int(user_input["readingPreviousSemester"])
+        reading_current_semester = int(user_input["readingCurrentSemester"])
         reading_skills = user_input["readingSkills"]
-        speaking_previous_semester = user_input["speakingPreviousSemester"]
-        speaking_current_semester = user_input["speakingCurrentSemester"]
+        speaking_previous_semester = int(user_input["speakingPreviousSemester"])
+        speaking_current_semester = int(user_input["speakingCurrentSemester"])
         speaking_skills = user_input["speakingSkills"]
-        writing_previous_semester = user_input["writingPreviousSemester"]
-        writing_current_semester = user_input["writingCurrentSemester"]
+        writing_previous_semester = int(user_input["writingPreviousSemester"])
+        writing_current_semester = int(user_input["writingCurrentSemester"])
         writing_skills = user_input["writingSkills"]
         overall_comment = user_input["overallComment"]
 
@@ -154,8 +176,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             11,
         )
 
-        text = "X---------------------O"
-        text_x = 335
+        text_x, text = generate_chart(
+            listening_previous_semester, listening_current_semester
+        )
         text_y = 183
         add_text_to_pdf(
             os.path.join(path, output_pdf_path),
@@ -164,11 +187,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             text_x,
             text_y,
             max_width,
-            11,
+            10,
         )
 
-        text = "X---------------------O"
-        text_x = 335
+        text_x, text = generate_chart(
+            reading_previous_semester, reading_current_semester
+        )
         text_y = 161
         add_text_to_pdf(
             os.path.join(path, output_pdf_path),
@@ -177,11 +201,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             text_x,
             text_y,
             max_width,
-            11,
+            10,
         )
 
-        text = "X---------------------O"
-        text_x = 335
+        text_x, text = generate_chart(
+            speaking_previous_semester, speaking_current_semester
+        )
         text_y = 141
         add_text_to_pdf(
             os.path.join(path, output_pdf_path),
@@ -190,11 +215,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             text_x,
             text_y,
             max_width,
-            11,
+            10,
         )
 
-        text = "X---------------------O"
-        text_x = 335
+        text_x, text = generate_chart(
+            writing_previous_semester, writing_current_semester
+        )
         text_y = 120
         add_text_to_pdf(
             os.path.join(path, output_pdf_path),
@@ -203,7 +229,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             text_x,
             text_y,
             max_width,
-            11,
+            10,
         )
 
         text_x = 60
