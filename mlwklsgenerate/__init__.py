@@ -7,13 +7,13 @@ import azure.functions as func
 from PyPDF2 import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 
-max_width = 480
+max_width = 492
 input_pdf_path = "input_pdf.pdf"
 output_pdf_path = "output_pdf_with_text.pdf"
 
 
 def load_template(id: str) -> str:
-    src_path = "./mlwkls/template"
+    src_path = "./mlwklsgenerate/template"
     dst_path = os.path.join("/tmp", id)
     if not os.path.exists(dst_path):
         os.mkdir(dst_path)
@@ -26,36 +26,18 @@ def load_template(id: str) -> str:
     return dst_path
 
 
-def get_rating(rating):
-    return {
-        "0": "Needs Attention",
-        "1": "Satisfactory",
-        "2": "Very Good",
-        "3": "Excellent",
-    }.get(rating, "Unknown")
-
-
-def generate_chart(previous_semester, current_semester):
-    difference_semester = current_semester - previous_semester
-    score = ""
-    if difference_semester > 0:
-        score = f"X{'-------------------------' * abs(difference_semester)}O"
-    elif difference_semester < 0:
-        score = f"O{'-------------------------' * abs(difference_semester)}X"
+def generate_chart(score):
+    if score == "0":
+        text_x = 167
+    elif score == "1":
+        text_x = 253
+    elif score == "2":
+        text_x = 337
+    elif score == "3":
+        text_x = 423
     else:
-        score = "X-O"
-
-    if min(previous_semester, current_semester) == 0:
-        text_x = 165
-    elif min(previous_semester, current_semester) == 1:
-        text_x = 250
-    elif min(previous_semester, current_semester) == 2:
-        text_x = 335
-    elif min(previous_semester, current_semester) == 3:
-        text_x = 420
-    else:
-        text_x = 505
-    return text_x, score
+        text_x = 509
+    return text_x, "X"
 
 
 def add_text_to_pdf(input_path, output_path, text_content, x, y, max_width, font_size):
@@ -100,32 +82,32 @@ def add_text_to_pdf(input_path, output_path, text_content, x, y, max_width, font
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("*******Starting Report function*******")
+    logging.info("*******Starting Generate function*******")
     try:
         user_input = req.get_json()
         student_name = user_input["studentName"]
-        grade = user_input["grade"]
+        grade = int(user_input["grade"])
         attendance = user_input["attendance"]
+        behaviour = user_input["behaviour"]
         effort = user_input["effort"]
-        behavior = user_input["behavior"]
-        listening_previous_semester = int(user_input["listeningPreviousSemester"])
-        listening_current_semester = int(user_input["listeningCurrentSemester"])
-        listening_skills = user_input["listeningSkills"]
-        reading_previous_semester = int(user_input["readingPreviousSemester"])
-        reading_current_semester = int(user_input["readingCurrentSemester"])
-        reading_skills = user_input["readingSkills"]
-        speaking_previous_semester = int(user_input["speakingPreviousSemester"])
-        speaking_current_semester = int(user_input["speakingCurrentSemester"])
-        speaking_skills = user_input["speakingSkills"]
-        writing_previous_semester = int(user_input["writingPreviousSemester"])
-        writing_current_semester = int(user_input["writingCurrentSemester"])
-        writing_skills = user_input["writingSkills"]
+        listening_skills = "\n".join(
+            f"- {skill}." for skill in user_input["listeningSkills"]
+        )
+        reading_skills = "\n".join(
+            f"- {skill}." for skill in user_input["readingSkills"]
+        )
+        speaking_skills = "\n".join(
+            f"- {skill}." for skill in user_input["speakingSkills"]
+        )
+        writing_skills = "\n".join(
+            f"- {skill}." for skill in user_input["writingSkills"]
+        )
         overall_comment = user_input["overallComment"]
 
         path = load_template(student_name)
 
-        text = f"{student_name} / Year {grade}"
-        text_x = 160
+        text = student_name
+        text_x = 155
         text_y = 702
         add_text_to_pdf(
             os.path.join(path, input_pdf_path),
@@ -137,21 +119,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             11,
         )
 
-        text = get_rating(attendance)
-        text_x = 160
-        text_y = 678
-        add_text_to_pdf(
-            os.path.join(path, output_pdf_path),
-            os.path.join(path, output_pdf_path),
-            text,
-            text_x,
-            text_y,
-            max_width,
-            11,
-        )
-
-        text = get_rating(effort)
-        text_x = 420
+        text = f"{'Year' if grade else ''} {grade if grade else 'Prep'}"
+        text_x = 390
         text_y = 702
         add_text_to_pdf(
             os.path.join(path, output_pdf_path),
@@ -163,125 +132,57 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             11,
         )
 
-        text = get_rating(behavior)
-        text_x = 420
-        text_y = 678
-        add_text_to_pdf(
-            os.path.join(path, output_pdf_path),
-            os.path.join(path, output_pdf_path),
-            text,
-            text_x,
-            text_y,
-            max_width,
-            11,
-        )
-
-        text_x, text = generate_chart(
-            listening_previous_semester, listening_current_semester
-        )
-        text_y = 183
-        add_text_to_pdf(
-            os.path.join(path, output_pdf_path),
-            os.path.join(path, output_pdf_path),
-            text,
-            text_x,
-            text_y,
-            max_width,
-            10,
-        )
-
-        text_x, text = generate_chart(
-            reading_previous_semester, reading_current_semester
-        )
-        text_y = 161
-        add_text_to_pdf(
-            os.path.join(path, output_pdf_path),
-            os.path.join(path, output_pdf_path),
-            text,
-            text_x,
-            text_y,
-            max_width,
-            10,
-        )
-
-        text_x, text = generate_chart(
-            speaking_previous_semester, speaking_current_semester
-        )
-        text_y = 141
-        add_text_to_pdf(
-            os.path.join(path, output_pdf_path),
-            os.path.join(path, output_pdf_path),
-            text,
-            text_x,
-            text_y,
-            max_width,
-            10,
-        )
-
-        text_x, text = generate_chart(
-            writing_previous_semester, writing_current_semester
-        )
-        text_y = 120
-        add_text_to_pdf(
-            os.path.join(path, output_pdf_path),
-            os.path.join(path, output_pdf_path),
-            text,
-            text_x,
-            text_y,
-            max_width,
-            10,
-        )
-
-        text_x = 60
+        text_x = 57
         text_y = 625
+        text_y = 652
         add_text_to_pdf(
             os.path.join(path, output_pdf_path),
             os.path.join(path, output_pdf_path),
-            "\n".join(listening_skills),
+            listening_skills,
             text_x,
             text_y,
             max_width,
             9,
         )
 
-        text_x = 60
-        text_y = 538
+        text_x = 57
+        text_y = 566
         add_text_to_pdf(
             os.path.join(path, output_pdf_path),
             os.path.join(path, output_pdf_path),
-            "\n".join(reading_skills),
+            reading_skills,
             text_x,
             text_y,
             max_width,
             9,
         )
 
-        text_x = 60
-        text_y = 450
+        text_x = 57
+        text_y = 480
         add_text_to_pdf(
             os.path.join(path, output_pdf_path),
             os.path.join(path, output_pdf_path),
-            "\n".join(speaking_skills),
+            speaking_skills,
             text_x,
             text_y,
             max_width,
             9,
         )
 
-        text_x = 60
-        text_y = 360
+        text_x = 57
+        text_y = 394
         add_text_to_pdf(
             os.path.join(path, output_pdf_path),
             os.path.join(path, output_pdf_path),
-            "\n".join(writing_skills),
+            writing_skills,
             text_x,
             text_y,
             max_width,
             9,
         )
 
-        text_x = 60
-        text_y = 276
+        text_x = 57
+        text_y = 305
         add_text_to_pdf(
             os.path.join(path, output_pdf_path),
             os.path.join(path, output_pdf_path),
@@ -290,6 +191,42 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             text_y,
             max_width,
             9,
+        )
+
+        text_x, text = generate_chart(attendance)
+        text_y = 118
+        add_text_to_pdf(
+            os.path.join(path, output_pdf_path),
+            os.path.join(path, output_pdf_path),
+            text,
+            text_x,
+            text_y,
+            max_width,
+            10,
+        )
+
+        text_x, text = generate_chart(behaviour)
+        text_y = 101
+        add_text_to_pdf(
+            os.path.join(path, output_pdf_path),
+            os.path.join(path, output_pdf_path),
+            text,
+            text_x,
+            text_y,
+            max_width,
+            10,
+        )
+
+        text_x, text = generate_chart(effort)
+        text_y = 84
+        add_text_to_pdf(
+            os.path.join(path, output_pdf_path),
+            os.path.join(path, output_pdf_path),
+            text,
+            text_x,
+            text_y,
+            max_width,
+            10,
         )
 
         if os.path.exists(os.path.join(path, output_pdf_path)):
