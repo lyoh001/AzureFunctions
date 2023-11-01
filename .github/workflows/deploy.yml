@@ -50,8 +50,10 @@ jobs:
         flake8 ./mlsupplychain --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
         flake8 ./mltelecom --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 ./mltelecom --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-        flake8 ./mlwkls --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 ./mlwkls --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 ./mlwklsbrush --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mlwklsbrush --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 ./mlwklsgenerate --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./mlwklsgenerate --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
         flake8 ./mlload --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 ./mlload --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
         flake8 ./mlping --count --select=E9,F63,F7,F82 --show-source --statistics
