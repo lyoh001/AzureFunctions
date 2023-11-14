@@ -4,9 +4,9 @@ beautifulsoup4
 boto3
 faiss-cpu
 huggingface_hub
-langchain
+langchain==0.0.330
 # nemoguardrails
-openai
+openai==0.28.1
 py-bing-search
 requests
 sentence-transformers
