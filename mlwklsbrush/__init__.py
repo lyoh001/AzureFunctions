@@ -44,10 +44,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "attendance": get_rating(user_input["attendance"]),
             "behaviour": get_rating(user_input["behaviour"]),
             "effort": get_rating(user_input["effort"]),
-            "listening_skills": " and ".join(user_input["listeningSkills"]),
-            "reading_skills": " and ".join(user_input["readingSkills"]),
-            "speaking_skills": " and ".join(user_input["speakingSkills"]),
-            "writing_skills": " and ".join(user_input["writingSkills"]),
+            "communication_skills": " and ".join(
+                f"{skill.split(']')[1]}" for skill in user_input["communicationSkills"]
+            ),
+            "understanding_skills": " and ".join(
+                f"{skill.split(']')[1]}" for skill in user_input["understandingSkills"]
+            ),
         }
         return func.HttpResponse(
             json.dumps({"updatedComment": brush(data)}),

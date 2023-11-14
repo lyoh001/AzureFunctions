@@ -4,12 +4,23 @@ import shutil
 from io import BytesIO
 
 import azure.functions as func
+import requests
 from PyPDF2 import PdfReader, PdfWriter
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 
 max_width = 492
 input_pdf_path = "input_pdf.pdf"
 output_pdf_path = "output_pdf_with_text.pdf"
+korean_font_path = "/tmp/gulim.ttf"
+korean_font_url = "https://github.com/lyoh001/AzureStaticWebApps/raw/main/wkls/font.ttf"
+
+
+def download_korean_font(font_url, font_path):
+    response = requests.get(font_url)
+    with open(font_path, "wb") as font_file:
+        font_file.write(response.content)
 
 
 def load_template(id: str) -> str:
@@ -48,7 +59,7 @@ def add_text_to_pdf(input_path, output_path, text_content, x, y, max_width, font
         page = pdf_reader.pages[page_num]
         packet = BytesIO()
         c = canvas.Canvas(packet)
-        c.setFont("Helvetica", font_size)
+        c.setFont("gulim", font_size)
         lines = []
         current_line = ""
         text_lines = text_content.split("\n")
@@ -56,7 +67,7 @@ def add_text_to_pdf(input_path, output_path, text_content, x, y, max_width, font
             words = line.split()
             for word in words:
                 test_line = current_line + word + " "
-                width = c.stringWidth(test_line, "Helvetica", font_size)
+                width = c.stringWidth(test_line, "gulim", font_size)
                 if width <= max_width:
                     current_line = test_line
                 else:
@@ -83,6 +94,8 @@ def add_text_to_pdf(input_path, output_path, text_content, x, y, max_width, font
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("*******Starting Generate function*******")
+    download_korean_font(korean_font_url, korean_font_path)
+    pdfmetrics.registerFont(TTFont("gulim", korean_font_path))
     try:
         user_input = req.get_json()
         student_name = user_input["studentName"]
@@ -90,25 +103,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         attendance = user_input["attendance"]
         behaviour = user_input["behaviour"]
         effort = user_input["effort"]
-        listening_skills = "\n".join(
-            f"- {skill}." for skill in user_input["listeningSkills"]
+        communucation_skills = "\n".join(
+            f"- {skill.split(']')[1]}" for skill in user_input["communicationSkills"]
         )
-        reading_skills = "\n".join(
-            f"- {skill}." for skill in user_input["readingSkills"]
-        )
-        speaking_skills = "\n".join(
-            f"- {skill}." for skill in user_input["speakingSkills"]
-        )
-        writing_skills = "\n".join(
-            f"- {skill}." for skill in user_input["writingSkills"]
+        understanding_skills = "\n".join(
+            f"- {skill.split(']')[1]}" for skill in user_input["understandingSkills"]
         )
         overall_comment = user_input["overallComment"]
-
         path = load_template(student_name)
-
         text = student_name
         text_x = 155
-        text_y = 702
+        text_y = 704
         add_text_to_pdf(
             os.path.join(path, input_pdf_path),
             os.path.join(path, output_pdf_path),
@@ -121,7 +126,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         text = f"{'Year' if grade else ''} {grade if grade else 'Prep'}"
         text_x = 390
-        text_y = 702
+        text_y = 704
         add_text_to_pdf(
             os.path.join(path, output_pdf_path),
             os.path.join(path, output_pdf_path),
@@ -138,19 +143,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         add_text_to_pdf(
             os.path.join(path, output_pdf_path),
             os.path.join(path, output_pdf_path),
-            listening_skills,
-            text_x,
-            text_y,
-            max_width,
-            9,
-        )
-
-        text_x = 57
-        text_y = 566
-        add_text_to_pdf(
-            os.path.join(path, output_pdf_path),
-            os.path.join(path, output_pdf_path),
-            reading_skills,
+            communucation_skills,
             text_x,
             text_y,
             max_width,
@@ -162,19 +155,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         add_text_to_pdf(
             os.path.join(path, output_pdf_path),
             os.path.join(path, output_pdf_path),
-            speaking_skills,
-            text_x,
-            text_y,
-            max_width,
-            9,
-        )
-
-        text_x = 57
-        text_y = 394
-        add_text_to_pdf(
-            os.path.join(path, output_pdf_path),
-            os.path.join(path, output_pdf_path),
-            writing_skills,
+            understanding_skills,
             text_x,
             text_y,
             max_width,
@@ -194,7 +175,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
         text_x, text = generate_chart(attendance)
-        text_y = 118
+        text_y = 119
         add_text_to_pdf(
             os.path.join(path, output_pdf_path),
             os.path.join(path, output_pdf_path),
@@ -206,7 +187,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
         text_x, text = generate_chart(behaviour)
-        text_y = 101
+        text_y = 102
         add_text_to_pdf(
             os.path.join(path, output_pdf_path),
             os.path.join(path, output_pdf_path),
