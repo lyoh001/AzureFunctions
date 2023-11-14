@@ -12,6 +12,7 @@ requests
 sentence-transformers
 wikipedia
 https://download.pytorch.org/whl/cpu/torch-2.0.1%2Bcpu-cp38-cp38-linux_x86_64.whl
+
 # azure-functions
 # boto3
 # huggingface_hub
